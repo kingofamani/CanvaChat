@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>區域網路聊天室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+        }
+        .message-container {
+            height: calc(100vh - 250px); /* 調整高度以適應在線用戶區域 */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .message {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .my-message {
+            background-color: #dcf8c6;
+            margin-left: auto;
+        }
+        .other-message {
+            background-color: #f2f2f2;
+            margin-right: auto;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-connected {
+            background-color: #4CAF50;
+        }
+        .status-disconnected {
+            background-color: #F44336;
+        }
+        .status-connecting {
+            background-color: #FFC107;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- 頂部標題欄 -->
+            <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold">區域網路聊天室</h1>
+                    <div class="ml-4 flex items-center text-sm">
+                        <span class="status-indicator status-disconnected" id="connection-status"></span>
+                        <span id="connection-text">未連接</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <input type="text" id="username-input" placeholder="您的名稱" 
+                           class="px-3 py-1 rounded text-black text-sm mr-2" value="訪客">
+                    <button id="connect-btn" class="bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-sm">
+                        連接
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 伺服器設置 -->
+            <div class="bg-gray-100 p-3 flex items-center justify-between border-b">
+                <div class="flex items-center">
+                    <span class="text-gray-700 mr-2">伺服器地址:</span>
+                    <input type="text" id="server-address-input" value="ws://localhost:8765" 
+                           class="px-2 py-1 border rounded text-sm w-64">
+                </div>
+                <div>
+                    <button id="save-server-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                        保存設置
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 在線用戶區域 -->
+            <div class="bg-blue-50 p-2 border-b">
+                <div class="flex items-center">
+                    <span class="text-gray-700 mr-2 text-sm font-medium">在線用戶:</span>
+                    <div id="online-users" class="text-sm text-blue-700">
+                        尚未連接
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 訊息顯示區域 -->
+            <div id="message-container" class="message-container p-4 bg-gray-50">
+                <div class="flex justify-center mb-4">
+                    <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm">
+                        歡迎來到聊天室！請輸入您的名稱並點擊「連接」按鈕開始聊天。
+                    </div>
+                </div>
+                <!-- 訊息將在這裡動態添加 -->
+            </div>
+            
+            <!-- 輸入區域 -->
+            <div class="p-4 border-t">
+                <form id="message-form" class="flex">
+                    <input type="text" id="message-input" 
+                           class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           placeholder="輸入訊息..." disabled>
+                    <button type="submit" id="send-btn" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400" 
+                            disabled>
+                        發送
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 說明區域 -->
+        <div class="mt-4 bg-white p-4 rounded-lg shadow">
+            <h2 class="font-bold text-lg mb-2">使用說明</h2>
+            <ol class="list-decimal pl-5 space-y-1 text-sm">
+                <li>運行 Python 後端伺服器: <code class="bg-gray-200 px-1 rounded">python chat_server.py</code> (需自行準備或修改範例)。</li>
+                <li>在「伺服器地址」輸入框中輸入您的伺服器位址 (例如: <code class="bg-gray-200 px-1 rounded">ws://192.168.1.5:8765</code>)。</li>
+                <li>點擊「保存設置」按鈕。</li>
+                <li>輸入您的「名稱」並點擊「連接」按鈕。</li>
+                <li>等待其他用戶連接後即可開始聊天！</li>
+            </ol>
+            <div class="mt-3 text-sm text-gray-600">
+                <p>提示: 如果您在本機運行伺服器和客戶端，可以使用 <code class="bg-gray-200 px-1 rounded">ws://localhost:8765</code>。</p>
+            </div>
+            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
+                <p class="text-yellow-800 text-sm">
+                    <span class="font-bold">注意:</span> 此聊天室前端需要一個運作中的 WebSocket 伺服器 (後端) 才能進行真實的聊天。請確保您已啟動相應的後端服務。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 元素
+        const messageContainer = document.getElementById('message-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const usernameInput = document.getElementById('username-input');
+        const connectBtn = document.getElementById('connect-btn');
+        const connectionStatus = document.getElementById('connection-status');
+        const connectionText = document.getElementById('connection-text');
+        const serverAddressInput = document.getElementById('server-address-input');
+        const saveServerBtn = document.getElementById('save-server-btn');
+        const onlineUsersElement = document.getElementById('online-users');
+        
+        // 變數
+        let socket = null;
+        let username = '訪客';
+        let serverAddress = 'ws://localhost:8765'; // 預設值
+        let onlineUsers = []; // 不儲存自己
+        
+        // 從 localStorage 加載伺服器地址和用戶名 (如果存在)
+        function loadSettings() {
+            const savedServerAddress = localStorage.getItem('chatServerAddress');
+            if (savedServerAddress) {
+                serverAddressInput.value = savedServerAddress;
+                serverAddress = savedServerAddress;
+            }
+            const savedUsername = localStorage.getItem('chatUsername');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                username = savedUsername;
+            }
+        }
+
+        // 保存伺服器地址和用戶名到 localStorage
+        function saveSettings() {
+            localStorage.setItem('chatServerAddress', serverAddress);
+            localStorage.setItem('chatUsername', username);
+        }
+
+        // 更新連接狀態 UI
+        function updateConnectionStatus(status) {
+            connectionStatus.className = 'status-indicator'; // Reset classes
+            
+            switch(status) {
+                case 'connected':
+                    connectionStatus.classList.add('status-connected');
+                    connectionText.textContent = '已連接';
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                    connectBtn.textContent = '斷開';
+                    connectBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    connectBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                    connectBtn.disabled = false; // 允許點擊斷開
+                    usernameInput.disabled = true; // 連接後用戶名不可改
+                    serverAddressInput.disabled = true; // 連接後伺服器地址不可改
+                    saveServerBtn.disabled = true;
+                    break;
+                case 'disconnected':
+                    connectionStatus.classList.add('status-disconnected');
+                    connectionText.textContent = '未連接';
+                    messageInput.disabled = true;
+                    sendBtn.disabled = true;
+                    connectBtn.textContent = '連接';
+                    connectBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    connectBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    connectBtn.disabled = false;
+                    onlineUsersElement.textContent = '尚未連接';
+                    onlineUsers = [];
+                    usernameInput.disabled = false;
+                    serverAddressInput.disabled = false;
+                    saveServerBtn.disabled = false;
+                    break;
+                case 'connecting':
+                    connectionStatus.classList.add('status-connecting');
+                    connectionText.textContent = '連接中...';
+                    messageInput.disabled = true;
+                    sendBtn.disabled = true;
+                    connectBtn.disabled = true;
+                    usernameInput.disabled = true;
+                    serverAddressInput.disabled = true;
+                    saveServerBtn.disabled = true;
+                    break;
+            }
+        }
+        
+        // 更新在線用戶列表
+        function updateOnlineUsersUI(usersList) {
+            // 確保 usersList 是陣列
+            const currentOnlineUsers = Array.isArray(usersList) ? usersList.filter(user => user !== username) : [];
+            onlineUsers = currentOnlineUsers; // 更新全局變數
+            if (currentOnlineUsers.length === 0) {
+                onlineUsersElement.textContent = '目前無其他用戶在線';
+            } else {
+                onlineUsersElement.textContent = currentOnlineUsers.join(', ');
+            }
+        }
+        
+        // 添加訊息到聊天區域
+        function addMessage(messageContent, sender, isSelf = false) {
+            const messageDiv = document.createElement('div');
+            // *** 修正點：移除模板字串前的反斜線 ***
+            messageDiv.className = `message max-w-[70%] rounded-lg px-4 py-2 mb-3 ${isSelf ? 'my-message' : 'other-message'}`;
+            
+            const timestamp = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            // *** 修正點：移除模板字串前的反斜線 ***
+            // 使用 textContent 處理用戶輸入的 messageContent 和 sender，防止 XSS
+            const senderDiv = document.createElement('div');
+            senderDiv.className = `font-bold ${isSelf ? 'text-right' : ''}`;
+            senderDiv.textContent = sender;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'break-words';
+            contentDiv.textContent = messageContent; // 主要內容使用 textContent
+
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = `text-xs text-gray-500 ${isSelf ? 'text-right' : ''}`;
+            timestampDiv.textContent = timestamp;
+
+            messageDiv.appendChild(senderDiv);
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timestampDiv);
+            
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+        
+        // 添加系統訊息
+        function addSystemMessage(messageText) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex justify-center mb-3';
+            // *** 修正點：移除模板字串前的反斜線 ***
+            messageDiv.innerHTML = `
+                <div class="bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm">
+                    ${messageText.replace(/</g, "<").replace(/>/g, ">")} 
+                </div>
+            `; // 對系統訊息也做簡單的 HTML 轉義
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+        
+        // 保存伺服器設置
+        function saveServerSettings() {
+            const newAddress = serverAddressInput.value.trim();
+            if (newAddress) {
+                serverAddress = newAddress;
+                username = usernameInput.value.trim() || '訪客'; // 同時保存當前用戶名
+                saveSettings(); // 保存到 localStorage
+                // *** 修正點：移除模板字串前的反斜線 ***
+                addSystemMessage(`伺服器地址已更新為: ${serverAddress}`);
+                
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.close(); // onclose 會處理 UI 更新
+                }
+            } else {
+                addSystemMessage('伺服器地址不能為空。');
+            }
+        }
+        
+        // 連接 WebSocket
+        function connectWebSocket() {
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                addSystemMessage('已在連接或已連接，若要重連請先斷開。');
+                if(socket.readyState === WebSocket.OPEN) socket.close();
+                return;
+            }
+            
+            username = usernameInput.value.trim();
+            if (!username) {
+                username = '訪客';
+                usernameInput.value = username;
+            }
+            // 更新並保存伺服器地址
+            const currentServerAddress = serverAddressInput.value.trim();
+            if(currentServerAddress){
+                serverAddress = currentServerAddress;
+            } else {
+                addSystemMessage('伺服器地址不能為空。');
+                serverAddressInput.value = serverAddress; // 恢復到上次有效值或預設值
+                return;
+            }
+            saveSettings(); // 保存用戶名和伺服器地址
+
+            updateConnectionStatus('connecting');
+            
+            try {
+                socket = new WebSocket(serverAddress);
+                
+                socket.onopen = () => {
+                    updateConnectionStatus('connected');
+                    // *** 修正點：移除模板字串前的反斜線 ***
+                    addSystemMessage(`已連接到聊天室，您的名稱是: ${username}`);
+                    
+                    const joinMessage = {
+                        type: 'join',
+                        username: username
+                    };
+                    socket.send(JSON.stringify(joinMessage));
+                };
+                
+                socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'message') {
+                            addMessage(data.content, data.username, data.username === username);
+                        } else if (data.type === 'system') {
+                            addSystemMessage(data.content);
+                        } else if (data.type === 'user_list') {
+                            updateOnlineUsersUI(data.users);
+                        } else if (data.type === 'user_joined') {
+                            // *** 修正點：移除模板字串前的反斜線 ***
+                            addSystemMessage(`${data.username} 加入了聊天室`);
+                            if (data.users) {
+                                updateOnlineUsersUI(data.users);
+                            }
+                        } else if (data.type === 'user_left') {
+                            // *** 修正點：移除模板字串前的反斜線 ***
+                            addSystemMessage(`${data.username} 離開了聊天室`);
+                            if (data.users) {
+                                updateOnlineUsersUI(data.users);
+                            }
+                        } else {
+                            console.log("收到未知類型的訊息: ", data);
+                        }
+                    } catch (error) {
+                        console.error('解析訊息時出錯:', error, '原始數據:', event.data);
+                        addSystemMessage('收到無法解析的訊息');
+                    }
+                };
+                
+                socket.onclose = (event) => {
+                    updateConnectionStatus('disconnected');
+                    let reason = '';
+                    if (event.code === 1000) reason = "(正常關閉)";
+                    else if (event.code === 1006) reason = "(異常斷開，請檢查伺服器或網路)";
+                    else reason = `(代碼: ${event.code})`;
+                    addSystemMessage(`已斷開連接 ${reason}`);
+                    socket = null; // 清理 socket 實例
+                };
+                
+                socket.onerror = (error) => {
+                    console.error('WebSocket 錯誤:', error);
+                    // onclose 通常也會被觸發，所以狀態更新可能由 onclose 處理
+                    // 但為了確保，如果此時 socket 狀態不是 CLOSED，可以手動更新
+                    if (socket && socket.readyState !== WebSocket.CLOSED) {
+                         updateConnectionStatus('disconnected');
+                    }
+                    addSystemMessage('連接發生錯誤，請檢查伺服器是否運行或地址是否正確。');
+                    socket = null; // 清理 socket 實例
+                };
+            } catch (error) {
+                console.error('建立 WebSocket 連接時出錯:', error);
+                addSystemMessage(`無法建立連接: ${error.message}`);
+                updateConnectionStatus('disconnected');
+                socket = null; // 清理 socket 實例
+            }
+        }
+        
+        // 發送訊息
+        function sendMessage() {
+            const messageContent = messageInput.value.trim();
+            if (!messageContent) return;
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                addSystemMessage('尚未連接，無法發送訊息。');
+                return;
+            }
+            
+            const messageData = {
+                type: 'message',
+                content: messageContent,
+                username: username
+            };
+            
+            socket.send(JSON.stringify(messageData));
+            // addMessage(messageContent, username, true); // 本地立即顯示自己的訊息 (可選，看後端是否回傳自己發送的)
+            messageInput.value = '';
+        }
+        
+        // 事件監聽器
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+        
+        connectBtn.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            } else {
+                connectWebSocket();
+            }
+        });
+        
+        saveServerBtn.addEventListener('click', saveServerSettings);
+        
+        // 初始化
+        loadSettings(); // 加載保存的設定
+        updateConnectionStatus('disconnected'); // 初始狀態
+        addSystemMessage('歡迎使用區域網路聊天室！請設置伺服器地址、您的名稱，然後點擊「連接」。');
+    </script>
+</body>
+</html>
