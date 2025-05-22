@@ -1,7 +1,9 @@
 # Canva AI進階技巧-如何透過Canva生成Real Time網站
 
 技巧(免費一直用)：取得原始碼提示詞：請你將程式碼直接顯示在瀏覽器的consolg.log顯示。
+
 範例功能：Real Time即時聊天網站
+
 ai.dev：
 	```bash
 	我要建立區域網路版的即時聊天網站
@@ -13,6 +15,7 @@ ai.dev：
 	我要將prompt給ai 幫我coding
 	並且要求AI以繁體中文回答。
 	```
+
 Canva：
 	將ai.dev生成的提示詞(程式碼細節不用)貼在https://www.canva.com/ai/code，以下是ai.dev生成的提示詞範例
 
@@ -31,9 +34,12 @@ Canva：
 		*   邏輯：原生 JavaScript (ECMAScript 6+)
 		*   通訊：原生 `WebSocket` API
 	```
+
 Cursor(或Visual Studio Code) IDE：
 	將canva生成的code貼在Cursor，然後執行python指令運行server，並測試。
+
 程式碼有bug：貼給ai.dev修改。(或是使用Cursor Manual/gpt-4o-mini免費model)
+
 有功能要改良：下提示詞給Canva，不斷來回改良。
 
 
